@@ -1,6 +1,3 @@
-import sys
-
-
 def bubble_sort(arr):
     n = len(arr)
     for i in range(n):
@@ -10,13 +7,12 @@ def bubble_sort(arr):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Использование: python script.py <число1> <число2> ... <числоN>")
-        sys.exit(1)
-
     try:
-        # Преобразуем аргументы командной строки в список целых чисел
-        numbers = list(map(int, sys.argv[1:]))
+        # Запрашиваем ввод чисел у пользователя
+        input_str = input("Введите числа через пробел: ")
+
+        # Преобразуем введенные данные в список целых чисел
+        numbers = list(map(int, input_str.split()))
 
         # Сортируем список методом пузырька
         bubble_sort(numbers)
@@ -24,4 +20,4 @@ if __name__ == "__main__":
         # Выводим отсортированный список
         print("Отсортированный список:", numbers)
     except ValueError:
-        print("Ошибка: Все аргументы должны быть целыми числами.")
+        print("Ошибка: Введите только числа, разделенные пробелами.")
