@@ -32,10 +32,13 @@ base_url = 'https://files.hi-tech.org/desktop/iva_connect/release/'
 runKey = ['/SILENT', '/CURRENTUSER']  # Модификаторы можно изменить здесь
 
 # Интервал проверки обновлений (в секундах)
-updateTime = 3600  # 1 час (можно изменить на нужное значение)
+updateTime = 30  # 30 секунд для теста (можно изменить на нужное значение)
 
 # Флаг для остановки цикла
 stop_flag = False
+
+# Переменная для хранения информации о последнем скачанном файле
+last_downloaded_file = None
 
 
 # Функция для получения списка версий
@@ -44,8 +47,12 @@ def get_versions(url):
     if response.status_code != 200:
         print(f'Ошибка: {response.status_code}')
         return []
+    return parse_versions(response.text)
 
-    soup = BeautifulSoup(response.text, 'html.parser')
+
+# Функция для парсинга версий из HTML
+def parse_versions(html):
+    soup = BeautifulSoup(html, 'html.parser')
     versions = []
 
     # Ищем все ссылки на странице
@@ -66,8 +73,12 @@ def get_latest_file_in_folder(folder_url):
     if response.status_code != 200:
         print(f'Ошибка: {response.status_code}')
         return None
+    return parse_files(response.text)
 
-    soup = BeautifulSoup(response.text, 'html.parser')
+
+# Функция для парсинга файлов из HTML
+def parse_files(html):
+    soup = BeautifulSoup(html, 'html.parser')
     files = []
 
     # Ищем все ссылки на файлы
@@ -96,7 +107,7 @@ def parse_version(v):
 
 # Основной цикл проверки обновлений
 def check_for_updates():
-    global stop_flag
+    global stop_flag, last_downloaded_file
     while not stop_flag:
         # Получаем текущее время
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -131,6 +142,16 @@ def check_for_updates():
                 time.sleep(1)
             continue
 
+        # Проверяем, был ли этот файл уже скачан
+        if latest_file_name == last_downloaded_file:
+            print(f'Файл {latest_file_name} уже скачан. Ожидаем новых версий...')
+            # Ждем 1 секунду и проверяем флаг stop_flag
+            for _ in range(updateTime):
+                if stop_flag:
+                    break
+                time.sleep(1)
+            continue
+
         # Скачиваем файл
         latest_file_url = version_url + latest_file_name
         print(f'Скачивание файла: {latest_file_name}')
@@ -141,6 +162,7 @@ def check_for_updates():
             with open(latest_file_name, 'wb') as file:
                 file.write(file_response.content)
             print(f'Файл успешно скачан: {latest_file_name}')
+            last_downloaded_file = latest_file_name  # Обновляем информацию о последнем скачанном файле
 
             # Запускаем скачанный файл с модификаторами из переменной runKey
             try:
@@ -165,12 +187,12 @@ update_thread = threading.Thread(target=check_for_updates)
 update_thread.start()
 
 # Ожидание ввода пользователя для выхода
-print("Программа проверки обновлений запущена. Введите любой символ (или текст) для выхода...")
-input()  # Ожидаем ввод пользователя
-
-# Устанавливаем флаг для остановки цикла
-stop_flag = True
-print("Завершение работы программы...")
+print("Программа проверки обновлений запущена. Введите 'exit' для завершения...")
+while True:
+    user_input = input().strip().lower()
+    if user_input == "exit":
+        stop_flag = True
+        break
 
 # Ожидаем завершения потока
 update_thread.join()
