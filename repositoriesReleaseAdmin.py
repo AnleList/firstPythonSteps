@@ -8,7 +8,7 @@ import ctypes
 import sys
 import time
 import threading
-from datetime import datetime  # Импортируем модуль для работы с временем
+from datetime import datetime
 
 
 # Функция для проверки прав администратора
@@ -106,7 +106,11 @@ def check_for_updates():
         versions = get_versions(base_url)
         if not versions:
             print('Версии не найдены.')
-            time.sleep(updateTime)
+            # Ждем 1 секунду и проверяем флаг stop_flag
+            for _ in range(updateTime):
+                if stop_flag:
+                    break
+                time.sleep(1)
             continue
 
         # Выбираем самую старшую версию с учетом _rc
@@ -120,7 +124,11 @@ def check_for_updates():
         latest_file_name = get_latest_file_in_folder(version_url)
         if not latest_file_name:
             print('Файлы .exe не найдены в папке версии.')
-            time.sleep(updateTime)
+            # Ждем 1 секунду и проверяем флаг stop_flag
+            for _ in range(updateTime):
+                if stop_flag:
+                    break
+                time.sleep(1)
             continue
 
         # Скачиваем файл
@@ -145,8 +153,11 @@ def check_for_updates():
         else:
             print(f'Ошибка при скачивании файла: {file_response.status_code}')
 
-        # Ждем указанное количество секунд перед следующей проверкой
-        time.sleep(updateTime)
+        # Ждем 1 секунду и проверяем флаг stop_flag
+        for _ in range(updateTime):
+            if stop_flag:
+                break
+            time.sleep(1)
 
 
 # Запуск проверки обновлений в отдельном потоке
