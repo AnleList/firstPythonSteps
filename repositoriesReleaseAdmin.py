@@ -4,9 +4,27 @@ from packaging import version
 import subprocess
 import re
 from urllib.parse import unquote
+import ctypes
+import sys
+
+# Функция для проверки прав администратора
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+# Если скрипт не запущен с правами администратора, перезапустить его
+if not is_admin():
+    print("Запуск с повышенными привилегиями...")
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    sys.exit()
 
 # Базовый URL
 base_url = 'https://files.hi-tech.org/desktop/iva_connect/release/'
+
+# Модификаторы для запуска установщика
+runKey = ['/SILENT', '/AllUsers']  # Модификаторы можно изменить здесь
 
 # Функция для получения списка версий
 def get_versions(url):
@@ -77,7 +95,7 @@ version_url = base_url + latest_version + '/'
 # Получаем самый новый файл в этой папке
 latest_file_name = get_latest_file_in_folder(version_url)
 if not latest_file_name:
-    print('Файлы .exe не найдены в папке версии.')
+    print('Файлы .exе не найдены в папке версии.')
     exit()
 
 # Скачиваем файл
@@ -91,11 +109,10 @@ if file_response.status_code == 200:
         file.write(file_response.content)
     print(f'Файл успешно скачан: {latest_file_name}')
 
-    # Запускаем скачанный файл с модификатором
+    # Запускаем скачанный файл с модификаторами из переменной runKey
     try:
-        runKey = ' /SILENT /CURRENTUSER'
-        print(f'Запуск файла: {latest_file_name} с ключом {runKey}')
-        subprocess.run([latest_file_name, '/SILENT', '/CURRENTUSER'], check=True)
+        print(f'Запуск файла: {latest_file_name} с ключами {runKey}')
+        subprocess.run([latest_file_name] + runKey, check=True)
     except subprocess.CalledProcessError as e:
         print(f'Ошибка при запуске файла: {e}')
     except FileNotFoundError:
