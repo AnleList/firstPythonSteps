@@ -9,6 +9,7 @@ import sys
 import time
 import threading
 from datetime import datetime
+import os
 
 
 # Функция для проверки прав администратора
@@ -20,10 +21,6 @@ def is_admin():
 
 
 # Если скрипт не запущен с правами администратора, перезапустить его
-if not is_admin():
-    print("Запуск с повышенными привилегиями...")
-    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
-    sys.exit()
 
 # Базовый URL
 base_url = 'https://files.hi-tech.org/desktop/iva_connect/release/'
@@ -32,7 +29,7 @@ base_url = 'https://files.hi-tech.org/desktop/iva_connect/release/'
 runKey = ['/SILENT', '/CURRENTUSER']  # Модификаторы можно изменить здесь
 
 # Интервал проверки обновлений (в секундах)
-updateTime = 30  # время в секундах (можно изменить на нужное значение)
+updateTime = 30  # 30 секунд для теста (можно изменить на нужное значение)
 
 # Флаг для остановки цикла
 stop_flag = False
@@ -132,11 +129,36 @@ def check_for_updates():
             print("Доступные релизы и релиз-кандидаты:")
             for i, version_str in enumerate(versions, start=1):
                 print(f"{i}. {version_str}")
-            print("0. Авто (самый новый релиз)")
-            choice = input("Выберите номер релиза или '0', для автоматического выбора версии: ").strip()
+            print(f"{len(versions) + 1}. Авто (самый новый релиз)")
+
+            # Формируем сообщение с доступными версиями
+            message = "Доступные релизы и релиз-кандидаты: && echo."
+            for i, version_str in enumerate(versions, start=1):
+                message += f"{i}. {version_str}; && echo."
+            message += f"{len(versions) + 1}. Авто (самый новый релиз); && echo."
+            message += "Введите номер релиза или 'авто': "
+
+            # Открываем новый терминал для ввода
+            if os.name == 'nt':  # Windows
+                command = f'echo {message} && set /p choice= && echo.%choice% > input.txt'
+                subprocess.Popen(['start', 'cmd', '/k', command], shell=True)
+            else:  # Linux/macOS
+                # Используем `echo -e` для многострочного вывода
+                command = f'echo -e "{message}" && read choice && echo $choice > input.txt'
+                subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
+
+            # Ждем, пока пользователь введет данные
+            while not os.path.exists('input.txt'):
+                time.sleep(0.1)
+
+            # Читаем ввод пользователя
+            with open('input.txt', 'r') as f:
+                choice = f.read().strip()
+            os.remove('input.txt')  # Удаляем временный файл
+
             if choice.isdigit() and 1 <= int(choice) <= len(versions):
                 selected_release = versions[int(choice) - 1]
-            elif int(choice) == 0:
+            elif choice.lower() == "авто":
                 selected_release = None  # Режим "авто"
             else:
                 print("Неверный выбор. Используется режим 'авто'.")
@@ -205,14 +227,6 @@ def check_for_updates():
 update_thread = threading.Thread(target=check_for_updates)
 update_thread.start()
 
-# Ожидание ввода пользователя для выхода
-print("Программа проверки обновлений запущена. Введите 'exit' для завершения...")
-while True:
-    user_input = input().strip().lower()
-    if user_input == "exit":
-        stop_flag = True
-        break
-
-# Ожидаем завершения потока
+# Ожидание завершения потока
 update_thread.join()
 print("Программа завершена.")
