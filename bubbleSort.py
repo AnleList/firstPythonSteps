@@ -1,9 +1,10 @@
-def bubble_sort(arr):
+def bubble_sort(arr) -> list[int]:
     n = len(arr)
     for i in range(n):
         for j in range(n - i - 1):
             if arr[j] > arr[j + 1]:
                 arr[j], arr[j + 1] = arr[j + 1], arr[j]
+    
 
 
 if __name__ == "__main__":
@@ -15,9 +16,9 @@ if __name__ == "__main__":
         numbers = list(map(int, input_str.split()))
 
         # Сортируем список методом пузырька
-        bubble_sort(numbers)
+        sortedList = bubble_sort(numbers)
 
         # Выводим отсортированный список
-        print("Отсортированный список:", numbers)
+        print("Отсортированный список:", sortedList)
     except ValueError:
         print("Ошибка: Введите только числа, разделенные пробелами.")
