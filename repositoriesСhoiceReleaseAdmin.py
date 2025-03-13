@@ -29,7 +29,7 @@ if not is_admin():
 base_url = 'https://files.hi-tech.org/desktop/iva_connect/release/'
 
 # Модификаторы для запуска установщика
-runKey = ['/SILENT', '/CURRENTUSER']  # Модификаторы можно изменить здесь (/ALLUSERS)
+runKey = ['/SILENT', '/ALLUSERS']  # Модификаторы можно изменить здесь (/ALLUSERS CURRENTUSER)
 
 # Интервал проверки обновлений (в секундах)
 updateTime = 30  # время в секундах (можно изменить на нужное значение)
